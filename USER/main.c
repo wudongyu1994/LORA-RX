@@ -48,13 +48,22 @@ int main(void)
 		USART3_RX_STA=0;*/
         if(USART3_RX_STA&0X8000)	
 		{
-            
+            for(i=0;i<(USART3_RX_STA&0x7fff);i++)
+                data_rev[i]=USART3_RX_BUF[i];
+            if(data_rev[0]==0x80 && data_rev[1]==0x07 && data_rev[2]==0x11 && data_rev[10]==0x81){
+                for(i=1,temp=0; i<9; i++)
+                    temp+=data_rev[i];
+                if(data_rev[9]==temp){
+                    //code here:
 
-			printf("USART3_RX_STA=%x\n",(USART3_RX_STA));
+                }
+            }
+
+			/*printf("USART3_RX_STA=%x\n",(USART3_RX_STA));
 			for(i=0;i<(USART3_RX_STA&0x7fff);i++)
                 printf("%x ",USART3_RX_BUF[i]);
             printf("\n");
-			USART3_RX_STA=0;
+			USART3_RX_STA=0;*/
 		}
         // delay_ms(1000);
     }
