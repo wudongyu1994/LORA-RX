@@ -17,7 +17,7 @@
 //设备参数初始化(具体设备参数见lora_cfg.h定义)
 _LoRa_CFG LoRa_CFG=
 {
-    .addr = 2,       //设备地址
+    .addr = MY_ADDR,       //设备地址
     .power = LORA_POWER,     //发射功率
     .chn = LORA_CHN,         //信道
     .wlrate = LORA_RATE,     //空中速率
@@ -30,8 +30,6 @@ _LoRa_CFG LoRa_CFG=
 //全局参数
 EXTI_InitTypeDef EXTI_InitStructure;
 NVIC_InitTypeDef NVIC_InitStructure;
-u16 obj_addr=1;     //记录用户输入目标地址
-u8 obj_chn=LORA_CHN;       //记录用户输入目标信道
 
 //设备工作模式(用于记录设备状态)
 u8 Lora_mode=0;//0:配置模式 1:接收模式 2:发送模式
@@ -72,8 +70,13 @@ void EXTI4_IRQHandler(void)
         }
         else if(Int_mode==2)//下降沿(发送:数据已发送完 接收:数据输出结束)
         {
+			printf("EXTI4_IRQHandler->Lora_mode=%d\n",Lora_mode);
             if(Lora_mode==1)//接收模式
+			{
+				printf("EXTI4_IRQHandler->USART3_RX_STA=%x\n",USART3_RX_STA);
                 USART3_RX_STA|=1<<15;//数据计数标记完成
+				printf("EXTI4_IRQHandler->USART3_RX_STA=%x\n",USART3_RX_STA);
+			}
             else if(Lora_mode==2)//发送模式(串口数据发送完毕)
                 Lora_mode=1;//进入接收模式
             Int_mode=1;//设置上升沿触发
@@ -132,7 +135,7 @@ u8 LoRa_Init(void)
     delay_ms(40);
     while(retry--)
     {
-		printf("retry=%d\n",retry);
+        printf("retry=%d\n",retry);
         if(!lora_send_cmd("AT","OK",70))
             return 0;   //检测成功
     }
@@ -181,37 +184,34 @@ void LoRa_Set(void)
 
 }
 
-u8 Dire_Date[]= {0x11,0x22,0x33,0x44,0x01}; //定向传输数据
-u8 Tran_Data[30]= {0}; //透传数组
-u8 date[30]= {0}; //定向数组
+// u8 Dire_Date[]= {0x11,0x22,0x33,0x44,0x01}; //定向传输数据
 
-#define Dire_DateLen sizeof(Dire_Date)/sizeof(Dire_Date[0])
+
+// #define Dire_DateLen sizeof(Dire_Date)/sizeof(Dire_Date[0])
 
 //Lora模块发送数据
-void LoRa_SendData(void)
+void LoRa_SendData(u8 addh,u8 addl,u8 chn,u8 *Dire_Date)
 {
-    static u8 num=0;
-    u16 addr;
-    u8 chn;
+    u8 Tran_Data[30]= {0}; //透传数组
+    u8 date[30]= {0}; //定向数组
     u16 i=0;
+    u8 Dire_DateLen = 11;   // sizeof(Dire_Date)/sizeof(Dire_Date[0]);
 
+printf("Dire_DateLen= %d\n",Dire_DateLen);
     while(LORA_AUX);
     Lora_mode=2;    //标记"发送状态"
 
     if(LoRa_CFG.mode_sta == LORA_STA_Tran)//透明传输
     {
-		printf("LORA_STA_Tran\n");
-        sprintf((char*)Tran_Data,"ATK-LORA-01 TEST %d",num++);
+        printf("LORA_STA_Tran\n");
+        sprintf((char*)Tran_Data,"ATK-LORA-01 TEST");
         u3_printf("%s\r\n",Tran_Data);
-
     } else if(LoRa_CFG.mode_sta == LORA_STA_Dire)//定向传输
     {
-		printf("LORA_STA_Dire\n");
-        addr = obj_addr;//目标地址
-        chn = obj_chn;//目标信道
+        printf("LORA_STA_Dire\n");
 
-        date[0] =(addr>>8)&0xff;//高位地址
-        date[1] = addr&0xff;//低位地址
+        date[0] = addh;//高位地址
+        date[1] = addl;//低位地址
         date[2] = chn;//无线信道
 
         for(i=0; i<Dire_DateLen; i++) //数据写到发送BUFF
@@ -223,10 +223,9 @@ void LoRa_SendData(void)
             while(USART_GetFlagStatus(USART3,USART_FLAG_TC)==RESET);//循环发送,直到发送完毕
             USART_SendData(USART3,date[i]);
         }
-		for(i=0; i<(Dire_DateLen+3); i++)
+        for(i=0; i<(Dire_DateLen+3); i++)
             printf("%d ",date[i]);
-		printf("\n");
-        Dire_Date[4]++;//Dire_Date[4]数据更新
+        printf("\n");
     }
 }
 
@@ -237,9 +236,9 @@ void LoRa_SendData(void)
 u8* lora_check_cmd(u8 *str)
 {
     char *strx=0;
-    if(USART3_RX_STA&0X8000)		//接收到一次数据了
+    if(USART3_RX_STA&0X8000)        //接收到一次数据了
     {
-		printf("%s",(const char*)USART3_RX_BUF);
+        printf("%s",(const char*)USART3_RX_BUF);
         USART3_RX_BUF[USART3_RX_STA&0X7FFF]=0;//添加结束符
         strx=strstr((const char*)USART3_RX_BUF,(const char*)str);
     }
@@ -261,9 +260,9 @@ u8 lora_send_cmd(u8 *cmd,u8 *ack,u16 waittime)
         USART3->DR=(u32)cmd;
     } else u3_printf("%s\r\n",cmd);//发送命令
 
-    if(ack&&waittime)		//需要等待应答
+    if(ack&&waittime)       //需要等待应答
     {
-        while(--waittime)	//等待倒计时
+        while(--waittime)   //等待倒计时
         {
             delay_ms(10);
             if(USART3_RX_STA&0X8000)//接收到期待的应答结果
