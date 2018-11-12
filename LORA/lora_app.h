@@ -21,7 +21,7 @@ extern u8 Lora_mode;
 u8 LoRa_Init(void);
 void Aux_Int(u8 mode);
 void LoRa_Set(void);
-void LoRa_SendData(u8 addh,u8 addl,u8 chn,u8* Dire_Date);
+void LoRa_SendData(u8 addh,u8 addl,u8 chn,u8* Dire_Date,u8 Dire_DateLen);
 void LoRa_ReceData(void);
 void LoRa_Process(void);
 void Lora_Test(void);

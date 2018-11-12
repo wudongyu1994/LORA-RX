@@ -70,12 +70,12 @@ void EXTI4_IRQHandler(void)
         }
         else if(Int_mode==2)//下降沿(发送:数据已发送完 接收:数据输出结束)
         {
-			printf("EXTI4_IRQHandler->Lora_mode=%d\n",Lora_mode);
+			// printf("EXTI4_IRQHandler->Lora_mode=%d\n",Lora_mode);
             if(Lora_mode==1)//接收模式
 			{
-				printf("EXTI4_IRQHandler->USART3_RX_STA=%x\n",USART3_RX_STA);
+				// printf("EXTI4_IRQHandler->USART3_RX_STA=%x\n",USART3_RX_STA);
                 USART3_RX_STA|=1<<15;//数据计数标记完成
-				printf("EXTI4_IRQHandler->USART3_RX_STA=%x\n",USART3_RX_STA);
+				// printf("EXTI4_IRQHandler->USART3_RX_STA=%x\n",USART3_RX_STA);
 			}
             else if(Lora_mode==2)//发送模式(串口数据发送完毕)
                 Lora_mode=1;//进入接收模式
@@ -190,25 +190,25 @@ void LoRa_Set(void)
 // #define Dire_DateLen sizeof(Dire_Date)/sizeof(Dire_Date[0])
 
 //Lora模块发送数据
-void LoRa_SendData(u8 addh,u8 addl,u8 chn,u8 *Dire_Date)
+void LoRa_SendData(u8 addh,u8 addl,u8 chn,u8 *Dire_Date,u8 Dire_DateLen)
 {
     u8 Tran_Data[30]= {0}; //透传数组
     u8 date[30]= {0}; //定向数组
     u16 i=0;
-    u8 Dire_DateLen = 11;   // sizeof(Dire_Date)/sizeof(Dire_Date[0]);
+    // u8 Dire_DateLen =  sizeof(Dire_Date);///sizeof(Dire_Date[0]);
 
-printf("Dire_DateLen= %d\n",Dire_DateLen);
+// printf("Dire_DateLen= %d\n",Dire_DateLen);
     while(LORA_AUX);
     Lora_mode=2;    //标记"发送状态"
 
     if(LoRa_CFG.mode_sta == LORA_STA_Tran)//透明传输
     {
-        printf("LORA_STA_Tran\n");
+// printf("LORA_STA_Tran\n");
         sprintf((char*)Tran_Data,"ATK-LORA-01 TEST");
         u3_printf("%s\r\n",Tran_Data);
     } else if(LoRa_CFG.mode_sta == LORA_STA_Dire)//定向传输
     {
-        printf("LORA_STA_Dire\n");
+// printf("LORA_STA_Dire\n");
 
         date[0] = addh;//高位地址
         date[1] = addl;//低位地址
@@ -223,8 +223,9 @@ printf("Dire_DateLen= %d\n",Dire_DateLen);
             while(USART_GetFlagStatus(USART3,USART_FLAG_TC)==RESET);//循环发送,直到发送完毕
             USART_SendData(USART3,date[i]);
         }
+        printf("senddata= ");
         for(i=0; i<(Dire_DateLen+3); i++)
-            printf("%d ",date[i]);
+            printf("%x ",date[i]);
         printf("\n");
     }
 }

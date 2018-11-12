@@ -18,9 +18,12 @@
 int main(void)
 {
     u8 temp,i;
+	u8 data_rev[1024];
     u8 hour=1,min=2,locx=5,locy=6,crc=9;
-            //      0,  1,   2,   3,       4,       5,   6,  7,   8,   9,  10
-    u8 sendData[]={0x80,0x07,0x11,MY_ADDRH,MY_ADDRL,hour,min,locx,locy,crc,0x81};
+            //      0,  1,   2,   3,   4
+    u8 sendData[]={0x80,0x01,0x50,0x51,0x81};
+    u8 test[]={1,2,3,4,5};
+    u8 len= sizeof(sendData)/sizeof(sendData[0]);
 
 //	SystemInit();
     delay_init();
@@ -37,6 +40,7 @@ int main(void)
     printf("LoRa detected!\n");
     
     LoRa_Set();     //LoRa配置(进入配置需设置串口波特率为115200)
+    LoRa_SendData(OBJ_ADDRH,OBJ_ADDRL,OBJ_CHN,test,5);
 
     printf("start while(1)\n");
     while(1)
@@ -46,25 +50,33 @@ int main(void)
 			printf("%x ",USART3_RX_BUF[i]);
 		printf("\n");
 		USART3_RX_STA=0;*/
-        if(USART3_RX_STA&0X8000)	
-		{
-            for(i=0;i<(USART3_RX_STA&0x7fff);i++)
+        if(USART3_RX_STA&0X8000){
+            printf("data receive= ");
+            for(i=0;i<(USART3_RX_STA&0x7fff);i++){
+                printf("%x ",USART3_RX_BUF[i]);
                 data_rev[i]=USART3_RX_BUF[i];
+            }
+            printf("\n");
             if(data_rev[0]==0x80 && data_rev[1]==0x07 && data_rev[2]==0x11 && data_rev[10]==0x81){
                 for(i=1,temp=0; i<9; i++)
                     temp+=data_rev[i];
                 if(data_rev[9]==temp){
                     //code here:
+                    //store key data
 
+                    delay_ms(100);
+                    LoRa_SendData(OBJ_ADDRH,OBJ_ADDRL,OBJ_CHN,sendData,len);
+                    printf("ack= %x %x %x %x %x\n", sendData[0], sendData[1], sendData[2], sendData[3], sendData[4]);
                 }
+                memset(data_rev,0,1024);
             }
-
 			/*printf("USART3_RX_STA=%x\n",(USART3_RX_STA));
 			for(i=0;i<(USART3_RX_STA&0x7fff);i++)
                 printf("%x ",USART3_RX_BUF[i]);
-            printf("\n");
-			USART3_RX_STA=0;*/
+            printf("\n");*/
+			USART3_RX_STA=0;
 		}
-        // delay_ms(1000);
+        delay_ms(500);
+        printf("500ms passed\n");
     }
 }
