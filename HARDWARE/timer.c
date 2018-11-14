@@ -4,7 +4,7 @@
 /***********************************************************************************************
 * TIM4
 ***********************************************************************************************/
-extern vu16 USART3_RX_STA;
+extern vu16 USART2_RX_STA;
 u8 count_tim4=0;
 u8 count_tim4h=0;
 //配置TIM4预装载周期值
@@ -51,7 +51,7 @@ void TIM4_IRQHandler(void)   //TIM4中断
     if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET)  //检查TIM4更新中断发生与否
     {
         TIM_ClearITPendingBit(TIM4, TIM_IT_Update  );  //清除TIMx更新中断标志
-        USART3_RX_STA|=1<<15;    //标记接收完成
+        USART2_RX_STA|=1<<15;    //标记接收完成
         TIM_Cmd(TIM4, DISABLE); //关闭TIM4 
     }
 }

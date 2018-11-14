@@ -5,7 +5,7 @@
 #include "timer.h"
 #include "exti.h"
 #include "lora_app.h"
-#include "usart3.h"
+#include "usart2.h"
 
 /************************************************
 Âß¼­ÕªÒª
@@ -19,7 +19,6 @@ int main(void)
 {
     u8 temp,i;
 	u8 data_rev[1024];
-    u8 hour=1,min=2,locx=5,locy=6,crc=9;
             //      0,  1,   2,   3,   4
     u8 sendData[]={0x80,0x01,0x50,0x51,0x81};
     u8 test[]={1,2,3,4,5};
@@ -45,16 +44,16 @@ int main(void)
     printf("start while(1)\n");
     while(1)
     {
-		/*printf("USART3_RX_STA=%x\n",USART3_RX_STA);
-		for(i=0;i<(USART3_RX_STA&0x7fff);i++)
-			printf("%x ",USART3_RX_BUF[i]);
+		/*printf("USART2_RX_STA=%x\n",USART2_RX_STA);
+		for(i=0;i<(USART2_RX_STA&0x7fff);i++)
+			printf("%x ",USART2_RX_BUF[i]);
 		printf("\n");
-		USART3_RX_STA=0;*/
-        if(USART3_RX_STA&0X8000){
+		USART2_RX_STA=0;*/
+        if(USART2_RX_STA&0X8000){
             printf("data receive= ");
-            for(i=0;i<(USART3_RX_STA&0x7fff);i++){
-                printf("%x ",USART3_RX_BUF[i]);
-                data_rev[i]=USART3_RX_BUF[i];
+            for(i=0;i<(USART2_RX_STA&0x7fff);i++){
+                printf("%x ",USART2_RX_BUF[i]);
+                data_rev[i]=USART2_RX_BUF[i];
             }
             printf("\n");
             if(data_rev[0]==0x80 && data_rev[1]==0x07 && data_rev[2]==0x11 && data_rev[10]==0x81){
@@ -66,15 +65,15 @@ int main(void)
 
                     delay_ms(100);
                     LoRa_SendData(OBJ_ADDRH,OBJ_ADDRL,OBJ_CHN,sendData,len);
-                    printf("ack= %x %x %x %x %x\n", sendData[0], sendData[1], sendData[2], sendData[3], sendData[4]);
+                    printf("ack= %x %x %x %x %x\n", sendData[0], sendData[1], sendData[2], sendData[2], sendData[4]);
                 }
                 memset(data_rev,0,1024);
             }
-			/*printf("USART3_RX_STA=%x\n",(USART3_RX_STA));
-			for(i=0;i<(USART3_RX_STA&0x7fff);i++)
-                printf("%x ",USART3_RX_BUF[i]);
+			/*printf("USART2_RX_STA=%x\n",(USART2_RX_STA));
+			for(i=0;i<(USART2_RX_STA&0x7fff);i++)
+                printf("%x ",USART2_RX_BUF[i]);
             printf("\n");*/
-			USART3_RX_STA=0;
+			USART2_RX_STA=0;
 		}
         delay_ms(500);
         printf("500ms passed\n");
