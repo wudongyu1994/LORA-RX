@@ -25,6 +25,7 @@ void LoRa_SendData(u8 addh,u8 addl,u8 chn,u8* Dire_Date,u8 Dire_DateLen);
 void LoRa_ReceData(void);
 void LoRa_Process(void);
 void Lora_Test(void);
+void lora_atk_init(void);
 u8 lora_send_cmd(u8 *cmd,u8 *ack,u16 waittime);
 u8* lora_check_cmd(u8 *str);
 

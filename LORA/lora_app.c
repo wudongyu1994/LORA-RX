@@ -276,3 +276,16 @@ u8 lora_send_cmd(u8 *cmd,u8 *ack,u16 waittime)
     }
     return res;
 }
+
+u8 test[]={1,2,3,4,5};
+// 该函数完成所有初始化和设置过程，带阻塞，直到检测到lora位置才跳出
+void lora_atk_init(void){
+    while(LoRa_Init())  //初始化ATK-LORA-01模块,若初始化失败则300ms后重试，直到成功
+    {
+        printf("LoRa undetected...\n");
+        delay_ms(300);
+    }
+    printf("LoRa detected!\n");
+    LoRa_Set();     //LoRa配置(进入配置需设置串口波特率为115200)
+    LoRa_SendData(OBJ_ADDRH,OBJ_ADDRL,OBJ_CHN,test,5);
+}
